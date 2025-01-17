@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 import h5py
 
-
 # function to get neighbourhood:
 def getNeighborhood(inputXYZ, numNeighbors):
     """
@@ -23,8 +22,8 @@ def getNeighborhood(inputXYZ, numNeighbors):
                                 dim-2: xyz value
     """
     lenXYZ = np.shape(inputXYZ)[0]
-    dimension = np.shape(inputXYZ)[1]
-    neighborsXYZ = np.zeros([lenXYZ, numNeighbors, dimension])
+    dimXYZ = np.shape(inputXYZ)[1]
+    neighborsXYZ = np.zeros([lenXYZ, numNeighbors, dimXYZ])
 
     # scikit-learn implementation to get indices
     nbrs = NearestNeighbors(n_neighbors=(numNeighbors+1), algorithm='ball_tree').fit(inputXYZ)
@@ -42,10 +41,49 @@ def getNeighborhood(inputXYZ, numNeighbors):
             ax = fig.add_subplot(projection='3d')
             ax.scatter(inputXYZ[:,0],inputXYZ[:,1],inputXYZ[:,2],marker='.')
             ax.scatter(inputXYZ[i,0],inputXYZ[i,1],inputXYZ[i,2],marker='o', c='red', label='input point')
-            ax.scatter(neighborsXYZ[i,:,0],neighborsXYZ[i,:,1], neighborsXYZ[i,:,2],marker='o',c='green', label="2 nearest neighbors")
+            ax.scatter(neighborsXYZ[i,:,0],neighborsXYZ[i,:,1], neighborsXYZ[i,:,2],marker='o',c='green', label="nearest neighbors")
             plt.legend()
             plt.show()
     return indices, neighborsXYZ
+
+def getScatterMatrix(inputXYZ):
+    """
+    Compute the scatter matrix of a (sub) point cloud inputXYZ.
+    """
+    numPoints = np.size(inputXYZ,0)
+    meanPoint = np.mean(inputXYZ,0)     # compute the mean of all points (dim=0)
+
+    sumOverI = 0
+    for i in np.arange(numPoints):
+        sumOverI = sumOverI + (inputXYZ[i,:] - meanPoint) * (inputXYZ[i,:] - meanPoint).T
+
+    scatterMatrix = 1 / (numPoints + 1) * sumOverI
+
+    return scatterMatrix
+
+def getEigenValues(scatterMatrix):
+    pass
+
+def getCovarianceFeatures(inputXYZ, numNeighbors):
+    """
+    Compute the covariance features for each point of inputXYZ.
+    Covariance features are the 8 entries of the scattermatrix
+    """
+    neighborsXYZ = getNeighborhood(inputXYZ,numNeighbors)
+
+    # todo: getScatterMatrix() for each point
+    #
+    # todo: do PCA for each scattermatrix
+    #
+    # todo: get eigenvalues from PCA
+    #
+    # todo: compute the eight features for each point
+    #
+    # do all this in a loop by calling functions
+
+
+    #return covarianceFeatures
+    pass
 
 
 # main program
@@ -78,7 +116,6 @@ xyzt = np.column_stack((xt,yt,zt))
 xyzv = np.column_stack((xv,yv,zv))
 
 print(xyzt.shape)
-
 
 
 # Testing point cloud
