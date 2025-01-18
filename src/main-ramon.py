@@ -61,8 +61,15 @@ def getCovMatrix(inputXYZ):
     covMatrix = 1 / (numPoints - 1) * scatterMatrix             # Error correction frm script: (numPoints-1) https://en.wikipedia.org/wiki/Sample_mean_and_covariance
     return covMatrix
 
-def getEigenValues(scatterMatrix):
-    pass
+def getEigenValues(covMatrix):
+    eigenvalues, eigenvectors = np.linalg.eigh(covMatrix)
+    eigenvalues = np.flip(eigenvalues)                      # order largest first
+
+    lambda1 = eigenvalues[0]                                # largest eigenvalue
+    lambda2 = eigenvalues[1]
+    lambda3 = eigenvalues[2]                                # smallest eigenvalue
+
+    return lambda1, lambda2, lambda3
 
 def getCovarianceFeatures(inputXYZ, numNeighbors):
     """
@@ -97,8 +104,8 @@ with h5py.File(filepath+filename,'r') as file:
 
     train_data = file['PC_training']
     valid_data = file['PC_validation']
-    print(train_data.shape)
-    print(type(train_data))
+    #print(train_data.shape)
+    #print(type(train_data))
 
     xt = train_data[0,:]
     yt = train_data[1,:]
@@ -123,8 +130,9 @@ testCloud = np.random.rand(10,3)
 numNeighbors = 5
 
 idx, neighborsXYZ = getNeighborhood(testCloud, numNeighbors)
-print('neighborsXYZ', neighborsXYZ)
-print('idx',idx)
+#print('neighborsXYZ', neighborsXYZ)
+#print('idx',idx)
 
 covMatrix = getCovMatrix(testCloud)
-print(covMatrix)
+print("covMatrix", covMatrix)
+print("eigenValues", getEigenValues(covMatrix))
