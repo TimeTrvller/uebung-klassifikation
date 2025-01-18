@@ -11,22 +11,23 @@ Diese Datei enthält zwei (n x 4)-Matrizen, welche für n 3D-Punkte jeweils die 
 die Klassenzugehörigkeit enthalten. Erstellen Sie eine Funktion, die für eine (n x 3)-Matrix
 mit XYZ-Koordinaten für n Punkte als Eingangsgröße einen (n x k)- Vektor der in den jeweiligen
 Nachbarschaften enthaltenen Punkte angibt.
-"""                
+"""
+
+# Load the data             
                    
 filepath = './data/'
 filename = 'point_cloud_data.mat'
 
 with h5py.File(filepath+filename,'r') as file:
     # extract the training and validation data
-    train_data = file['PC_training']    # 4xn matrix (x,y,z,class)
-    print(train_data.shape)
-    valid_data = file['PC_validation']
+    train_data = file['PC_training']    # 4x36932 matrix (x,y,z,class)
+    valid_data = file['PC_validation']  # 4x91515 matrix (x,y,z,class)
     
     points3d_train = train_data[:3,:].T
     points3d_valid = valid_data[:3,:].T
 
 
-def getNeighborhood(points, k):
+def getNeighborhood(points, k, firstNeighbor=False):
     """
     Compute the k nearest neighbors for each point of points.
     
@@ -42,11 +43,19 @@ def getNeighborhood(points, k):
     distances, indices = nbrs.kneighbors(points)
 
     # Exclude the first neighbor (itself) if needed
-    indices = indices[:, 1:]
+    if firstNeighbor:
+        indices = indices[:, 1:]
+        
+    # Get the coordinates of the neighbors
+    points_neighbors = points[indices]
 
-    return indices
-    
-    
+    return indices, points_neighbors
+
+# Test the function
+points = points3d_train
+k = 50
+indices_neighbors, points_neighbors = getNeighborhood(points, k)
+
     
 #? --- AUFGABE 2 -------------------------------------------------------------
 """
@@ -54,3 +63,4 @@ Erstellen Sie eine Funktion, mit der für eine (n x 3)-Matrix mit XYZ-Koordinate
 die entsprechenden Covariance Features berechnet werden.
 Hinweis: Die Funktion soll eine (n x 8)-Matrix liefern.
 """
+
