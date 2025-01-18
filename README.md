@@ -4,7 +4,7 @@ The goal of this exercise is the implementation of a procedure for semantic clas
 We chose a neighborhood of k=50 nearest neighbors.<br>
 The exercise consists of the following steps.
 
-## Neighborhood 
+## Neighborhood
 The input data `point_cloud_data.mat` are loaded with the module `h5py`. They consist of two nx4 matrices.
 Each matrix consists of XYZ coordinates and the point class. The first step is to implement a function to get the (nx3) matrix of neighbors for each point of a point cloud.
 This function is implemented as `getNeighborhood()`.
@@ -13,9 +13,9 @@ This function is implemented as `getNeighborhood()`.
 For each point, a total of eight features based on the eigenvalues of the *scatter matrix* are computed. This is done in the functions `getScatterMatrix()` and `computeCovarianceFeatures()`.
 The *scatter matrix* or *structure tensor* is given by the 3D covariance matrix
 ```math
-S3D = \frac{1}{k+1} \cdot \sum_{i=0}^{k} (X_i - \bar{X})(X_i - \bar{X})^T
+S3D = \frac{1}{k-1} \cdot \sum_{i=0}^{k} (X_i - \bar{X})(X_i - \bar{X})^T
 ```
-Once the eigenvalues 
+Once the eigenvalues
 ```math
 \lambda_1 \geq \lambda_2 \geq \lambda3
 ```

@@ -16,7 +16,7 @@ def getNeighborhood(inputXYZ, numNeighbors):
     Variables:  inputXYZ:       input point cloud
                 numNeighbors:   number of neighbors to be computed
     Returns:    indices:        indices of neighbors in point cloud
-                neighborsXYZ:   3D-np-array with k neighbors of each point
+                neighborsXYZ:   3D-np-array wit*h k neighbors of each point
                                 dim-0: points
                                 dim-1: k neighbors
                                 dim-2: xyz value
@@ -46,20 +46,20 @@ def getNeighborhood(inputXYZ, numNeighbors):
             plt.show()
     return indices, neighborsXYZ
 
-def getScatterMatrix(inputXYZ):
+def getCovMatrix(inputXYZ):
     """
-    Compute the scatter matrix of a (sub) point cloud inputXYZ.
+    Compute the covariance matrix of a (sample) point cloud inputXYZ. This is also called the 3D structure tensor.
+    Link: https://en.wikipedia.org/wiki/Estimation_of_covariance_matrices
     """
     numPoints = np.size(inputXYZ,0)
-    meanPoint = np.mean(inputXYZ,0)     # compute the mean of all points (dim=0)
+    sampleMean = np.mean(inputXYZ,0)     # compute the mean of all points (dim=0)
 
-    sumOverI = 0
-    for i in np.arange(numPoints):
-        sumOverI = sumOverI + (inputXYZ[i,:] - meanPoint) * (inputXYZ[i,:] - meanPoint).T
+    inputXYZNormed = inputXYZ - sampleMean                      # transfor to weighted coordinates
+    scatterMatrix = inputXYZNormed.T @ inputXYZNormed           # the outer matrix product does the work of the sum in the formula (c.f. readme.md)
+    #scatterMatrix = np.dot(inputXYZNormed.T, inputXYZNormed)   # alternative code for the outer product
 
-    scatterMatrix = 1 / (numPoints + 1) * sumOverI
-
-    return scatterMatrix
+    covMatrix = 1 / (numPoints - 1) * scatterMatrix             # Error correction frm script: (numPoints-1) https://en.wikipedia.org/wiki/Sample_mean_and_covariance
+    return covMatrix
 
 def getEigenValues(scatterMatrix):
     pass
@@ -125,3 +125,6 @@ numNeighbors = 5
 idx, neighborsXYZ = getNeighborhood(testCloud, numNeighbors)
 print('neighborsXYZ', neighborsXYZ)
 print('idx',idx)
+
+covMatrix = getCovMatrix(testCloud)
+print(covMatrix)
