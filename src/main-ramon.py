@@ -64,6 +64,10 @@ def getCovMatrix(inputXYZ):
 def getEigenValues(covMatrix):
     eigenvalues, eigenvectors = np.linalg.eigh(covMatrix)
     eigenvalues = np.flip(eigenvalues)                      # order largest first
+    
+    print("eigenvalues", eigenvalues)
+    
+    
 
     lambda1 = eigenvalues[0]                                # largest eigenvalue
     lambda2 = eigenvalues[1]
@@ -87,15 +91,13 @@ def getCovarianceFeatures(inputXYZ, numNeighbors):
     # todo: compute the eight features for each point
     #
     # do all this in a loop by calling functions
-
-
     #return covarianceFeatures
     pass
 
 
 # main program
-filepath = '../data/'       # Linux
-# filepath = './data/'      # Windows
+# filepath = '../data/'       # Linux
+filepath = './data/'      # Windows
 filename = 'point_cloud_data.mat'
 
 with h5py.File(filepath+filename,'r') as file:
