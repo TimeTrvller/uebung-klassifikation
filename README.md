@@ -17,7 +17,7 @@ S3D = \frac{1}{k-1} \cdot \sum_{i=0}^{k} (X_i - \bar{X})(X_i - \bar{X})^T
 ```
 Once the eigenvalues
 ```math
-\lambda_1 \geq \lambda_2 \geq \lambda3
+\lambda_1 \geq \lambda_2 \geq \lambda3 \geq 0
 ```
 are computed by PCA, they are used to compute the following eight features:
 
