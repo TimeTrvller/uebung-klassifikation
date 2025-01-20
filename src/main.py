@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, cross_validate
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import h5py
 import time
 
@@ -32,8 +33,12 @@ with h5py.File(filepath+filename,'r') as file:
     points3d_train = train_data[:3,:].T # 36932x3 matrix (x,y,z)
     points3d_valid = valid_data[:3,:].T # 91515x3 matrix (x,y,z)
 
-    class_train = train_data[3,:].T
-    class_valid = valid_data[3,:].T
+    class_train = train_data[3,:].T     # 36932x1 matrix (class)
+    class_valid = valid_data[3,:].T     # 91515x1 matrix (class)
+    
+# print number of points in each class    
+print(f'Number of each class in class_train: {np.unique(class_train, return_counts=True)}')
+print(f'Number of each class in class_valid: {np.unique(class_valid, return_counts=True)}')
 
 
 def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
@@ -47,7 +52,6 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
     Returns:
         indices_neighbors : (n x k)-Matrix with the indices of the neighbors
         points_neighbors  : (n x k x 3)-Matrix with the coordinates of the neighbors
-    
     """
     
     # Initialize the NearestNeighbors model
@@ -66,14 +70,14 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
     return indices, points_neighbors
 
 # Test the function
-points_train = points3d_train
 k = 50
-indices_neighbors_train, points_neighbors_train = getNeighborhood(points_train, k, firstNeighbor=True)
+indices_neighbors_train, points_neighbors_train = getNeighborhood(points3d_train, k, firstNeighbor=True)
+indices_neighbors_valid, points_neighbors_valid = getNeighborhood(points3d_valid, k, firstNeighbor=True)
 
 # logging
 print("==="*30)
 print(f"Completed Nearest Neighbors ({round(time.time()-start_time,2)} seconds)\n")
-print(f'points_train.shape: {points_train.shape}')
+print(f'points_train.shape: {points3d_train.shape}')
 print(f'indices_neighbors_train.shape: {indices_neighbors_train.shape}')
 print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
 
@@ -140,6 +144,7 @@ def getCovFeatures(points_neighbors: np.ndarray):
     
 # Test the function
 cov_features_train = getCovFeatures(points_neighbors_train)
+cov_features_valid = getCovFeatures(points_neighbors_valid)
 
 # logging
 print("==="*30)
@@ -155,6 +160,7 @@ Klassifikator soll auf den gekennzeichneten Trainingsdaten trainiert werden, so 
 Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 """
 
+
 # mit bootstrap=True und max_samples wird festgelegt, wie viele zufällige Einträge genutzt werden sollen, 
 # um die einzelnen Bäume zu trainieren. n_estimators legt fest, wie viele Bäume trainiert werden sollen.
 # Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
@@ -169,6 +175,31 @@ print(f'rfc: {rfc}')
 
 start_time = time.time()
 
+
+
+# Apply the Random Forest Classifier to the validation data
+class_pred = rfc.predict(cov_features_valid)
+
+# # ave class_pred and class_valid side by side
+# class_pred = class_pred.reshape(-1,1)
+# class_valid = class_valid.reshape(-1,1)
+# class_pred_valid = np.hstack((class_pred,class_valid))
+
+# np.savetxt('class_pred_valid.csv', class_pred_valid, delimiter=',', fmt='%d')
+# Step 2: Compute the confusion matrix
+cm = confusion_matrix(class_valid, class_pred)
+
+# Step 3 (Optional): Display the confusion matrix
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
+disp.plot(cmap='Blues')  # Adjust the colormap if needed
+
+# Show the plot
+import matplotlib.pyplot as plt
+plt.show()
+
+
+
+
 #%% --- AUFGABE 4 -------------------------------------------------------------
 """
 Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
@@ -177,10 +208,11 @@ und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Forme
 """
 
 # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
-scores = cross_validate(rfc,cov_features_train,class_train) # erlaubt mittels scoring= für eigene Metriken
+scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
 
 # logging
 print("==="*30)
-print(f"Completed Random Forest Classification ({round(time.time()-start_time,2)} seconds)\n")
-print(f'scores:  + {scores['test_score']}')
-print('.')
+print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
+print(f'scores: {scores}')
+
+
