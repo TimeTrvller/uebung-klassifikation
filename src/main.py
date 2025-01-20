@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, cross_validate
 import h5py
 
 
@@ -139,9 +139,17 @@ Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 # um die einzelnen Bäume zu trainieren. n_estimators legt fest, wie viele Bäume trainiert werden sollen.
 # Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
 # Werte 20 und 0.4 sind absichtlich niedrig gewählt damit der code schneller läuft. Für "echte" Ergebnisse hochsetzen
-rfc = RandomForestClassifier(n_estimators=20,bootstrap=True,max_samples=int(cov_features_train.shape[0]*.4),n_jobs=2)
+rfc = RandomForestClassifier(n_estimators=100,bootstrap=True,max_samples=int(cov_features_train.shape[0]*.6),n_jobs=4)
 # rfc = rfc.fit(X=cov_features_train,y=class_train)
 
-scores = cross_val_score(rfc,points3d_train,class_train,cv=5)
-print(scores)
+#? --- AUFGABE 4 -------------------------------------------------------------
+"""
+Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
+Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
+und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
+"""
+
+# scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
+scores = cross_validate(rfc,cov_features_train,class_train) # erlaubt mittels scoring= für eigene Metriken
+print('scores: ' + scores['test_score'])
 print('.')
