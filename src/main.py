@@ -10,7 +10,7 @@ import time
 # processing time
 start_time = time.time()
 
-#? --- AUFGABE 1 -------------------------------------------------------------
+#%% --- AUFGABE 1 -------------------------------------------------------------
 """
 Laden Sie die gegebene Datei 'point_cloud_data.mat' in Ihrem Python-Skript (z.B. mit dem Modul h5py).
 Diese Datei enthält zwei (n x 4)-Matrizen, welche für n 3D-Punkte jeweils die XYZ-Koordinaten sowie
@@ -79,7 +79,7 @@ print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
 
 start = time.time()
     
-#? --- AUFGABE 2 -------------------------------------------------------------
+#%% --- AUFGABE 2 -------------------------------------------------------------
 """
 Erstellen Sie eine Funktion, mit der für eine (n x 3)-Matrix mit XYZ-Koordinaten
 die entsprechenden Covariance Features berechnet werden.
@@ -148,7 +148,7 @@ print(f'cov_features_train.shape: {cov_features_train.shape}')
 
 start_time = time.time()
 
-#? --- AUFGABE 3 -------------------------------------------------------------
+#%% --- AUFGABE 3 -------------------------------------------------------------
 """
 Führen Sie eine Klassifikation mittels des Random Forest Klassifikators durch. Dieser
 Klassifikator soll auf den gekennzeichneten Trainingsdaten trainiert werden, so dass die
@@ -160,9 +160,16 @@ Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 # Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
 # Werte 20 und 0.4 sind absichtlich niedrig gewählt damit der code schneller läuft. Für "echte" Ergebnisse hochsetzen
 rfc = RandomForestClassifier(n_estimators=100,bootstrap=True,max_samples=int(cov_features_train.shape[0]*.6),n_jobs=4)
-# rfc = rfc.fit(X=cov_features_train,y=class_train)
+rfc = rfc.fit(X=cov_features_train,y=class_train)
 
-#? --- AUFGABE 4 -------------------------------------------------------------
+# logging
+print("==="*30)
+print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
+print(f'rfc: {rfc}')
+
+start_time = time.time()
+
+#%% --- AUFGABE 4 -------------------------------------------------------------
 """
 Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
 Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
