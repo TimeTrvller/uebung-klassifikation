@@ -122,3 +122,5 @@ def getCovFeatures(points_neighbors: np.ndarray):
 # Test the function
 cov_features_train = getCovFeatures(points_neighbors_train)
 
+print(cov_features_train)
+

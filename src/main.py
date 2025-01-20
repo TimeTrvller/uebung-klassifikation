@@ -4,7 +4,11 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, cross_validate
 import h5py
+import time
 
+
+# processing time
+start_time = time.time()
 
 #? --- AUFGABE 1 -------------------------------------------------------------
 """
@@ -65,6 +69,15 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
 points_train = points3d_train
 k = 50
 indices_neighbors_train, points_neighbors_train = getNeighborhood(points_train, k, firstNeighbor=True)
+
+# logging
+print("==="*30)
+print(f"Completed Nearest Neighbors ({round(time.time()-start_time,2)} seconds)\n")
+print(f'points_train.shape: {points_train.shape}')
+print(f'indices_neighbors_train.shape: {indices_neighbors_train.shape}')
+print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
+
+start = time.time()
     
 #? --- AUFGABE 2 -------------------------------------------------------------
 """
@@ -128,6 +141,13 @@ def getCovFeatures(points_neighbors: np.ndarray):
 # Test the function
 cov_features_train = getCovFeatures(points_neighbors_train)
 
+# logging
+print("==="*30)
+print(f"Completed Covariance Features ({round(time.time()-start_time,2)} seconds)\n")
+print(f'cov_features_train.shape: {cov_features_train.shape}')
+
+start_time = time.time()
+
 #? --- AUFGABE 3 -------------------------------------------------------------
 """
 Führen Sie eine Klassifikation mittels des Random Forest Klassifikators durch. Dieser
@@ -151,5 +171,9 @@ und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Forme
 
 # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
 scores = cross_validate(rfc,cov_features_train,class_train) # erlaubt mittels scoring= für eigene Metriken
-print('scores: ' + scores['test_score'])
+
+# logging
+print("==="*30)
+print(f"Completed Random Forest Classification ({round(time.time()-start_time,2)} seconds)\n")
+print(f'scores:  + {scores['test_score']}')
 print('.')
