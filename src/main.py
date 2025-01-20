@@ -4,8 +4,10 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from helper_functions import create_colored_point_cloud, save_colored_point_cloud_as_ply
 import h5py
 import time
+
 
 
 # processing time
@@ -35,6 +37,13 @@ with h5py.File(filepath+filename,'r') as file:
 
     class_train = train_data[3,:].T     # 36932x1 matrix (class)
     class_valid = valid_data[3,:].T     # 91515x1 matrix (class)
+    
+
+
+valid_data = np.vstack((points3d_valid.T, class_valid)).T
+train_data = np.vstack((points3d_train.T, class_train)).T
+
+
     
 # print number of points in each class    
 print(f'Number of each class in class_train: {np.unique(class_train, return_counts=True)}')
@@ -165,8 +174,11 @@ Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 # um die einzelnen Bäume zu trainieren. n_estimators legt fest, wie viele Bäume trainiert werden sollen.
 # Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
 # Werte 20 und 0.4 sind absichtlich niedrig gewählt damit der code schneller läuft. Für "echte" Ergebnisse hochsetzen
-rfc = RandomForestClassifier(n_estimators=100,bootstrap=True,max_samples=int(cov_features_train.shape[0]*.6),n_jobs=4)
+rfc = RandomForestClassifier(n_estimators=200,bootstrap=False,n_jobs=4)
 rfc = rfc.fit(X=cov_features_train,y=class_train)
+
+# Apply the Random Forest Classifier to the validation data
+class_pred = rfc.predict(cov_features_valid)
 
 # logging
 print("==="*30)
@@ -177,29 +189,6 @@ start_time = time.time()
 
 
 
-# Apply the Random Forest Classifier to the validation data
-class_pred = rfc.predict(cov_features_valid)
-
-# # ave class_pred and class_valid side by side
-# class_pred = class_pred.reshape(-1,1)
-# class_valid = class_valid.reshape(-1,1)
-# class_pred_valid = np.hstack((class_pred,class_valid))
-
-# np.savetxt('class_pred_valid.csv', class_pred_valid, delimiter=',', fmt='%d')
-# Step 2: Compute the confusion matrix
-cm = confusion_matrix(class_valid, class_pred)
-
-# Step 3 (Optional): Display the confusion matrix
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
-disp.plot(cmap='Blues')  # Adjust the colormap if needed
-
-# Show the plot
-import matplotlib.pyplot as plt
-plt.show()
-
-
-
-
 #%% --- AUFGABE 4 -------------------------------------------------------------
 """
 Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
@@ -207,12 +196,48 @@ Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Met
 und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
 """
 
-# scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
-scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
+# # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
+# scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
 
-# logging
-print("==="*30)
-print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
-print(f'scores: {scores}')
+# # logging
+# print("==="*30)
+# print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
+# print(f'scores: {scores}')
+
+# # # ave class_pred and class_valid side by side
+# # class_pred = class_pred.reshape(-1,1)
+# # class_valid = class_valid.reshape(-1,1)
+# # class_pred_valid = np.hstack((class_pred,class_valid))
+
+# # np.savetxt('class_pred_valid.csv', class_pred_valid, delimiter=',', fmt='%d')
+# # Step 2: Compute the confusion matrix
+# cm = confusion_matrix(class_valid, class_pred)
+
+# # Step 3 (Optional): Display the confusion matrix
+# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
+# disp.plot(cmap='Blues')  # Adjust the colormap if needed
+
+# # Show the plot
+# import matplotlib.pyplot as plt
+# plt.show()
 
 
+
+
+#%% --- AUFGABE 5 --------------------------------------------------------------
+"""
+Exportieren Sie Ihre klassifizierte und nach Klassen eingefärbte Punktwolke
+mithilfe der bereitgestellten Funktionen in helper_functions.py als *.ply-Datei.
+Diese Datei können Sie in Meshlab zur 3D-Visualisierung importieren.
+"""
+
+# Create colored point clouds
+# Prediction
+colored_point_cloud = create_colored_point_cloud(valid_data, class_pred)
+save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_data_pred')
+# Ground truth
+colored_point_cloud = create_colored_point_cloud(valid_data, class_valid)
+save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_data_gt')
+# Train data
+colored_point_cloud = create_colored_point_cloud(train_data, class_train)
+save_colored_point_cloud_as_ply(colored_point_cloud, 'train_data')

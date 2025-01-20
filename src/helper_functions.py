@@ -34,7 +34,7 @@ def create_colored_point_cloud(point_cloud, predictions):
     colored_point_cloud[:, :3] = point_cloud[:, :3]
     colored_point_cloud[:, 3:] = colored_predictions
 
-    print(colored_point_cloud.shape, colored_point_cloud)
+    # print(colored_point_cloud.shape, colored_point_cloud)
 
     return colored_point_cloud  # shape N x [X, Y, Z, R, G, B]
 
@@ -50,7 +50,7 @@ def save_colored_point_cloud_as_ply(colored_point_cloud, file_addition: str):
     n = len(colored_point_cloud)
     max_size = np.max(colored_point_cloud.shape)
 
-    current_dir = os.getcwd()
+    current_dir = f"{os.getcwd()}/data"
     file_name = current_dir + '/point_cloud_' + file_addition + '.ply'
 
     with open(file_name, 'w') as writer:
