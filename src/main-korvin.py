@@ -1,10 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, cross_validate
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from helper_functions import create_colored_point_cloud, save_colored_point_cloud_as_ply
 import h5py
+import time
 
 
-#? --- AUFGABE 1 -------------------------------------------------------------
+
+# processing time
+start_time = time.time()
+
+#%% --- AUFGABE 1 -------------------------------------------------------------
 """
 Laden Sie die gegebene Datei 'point_cloud_data.mat' in Ihrem Python-Skript (z.B. mit dem Modul h5py).
 Diese Datei enthält zwei (n x 4)-Matrizen, welche für n 3D-Punkte jeweils die XYZ-Koordinaten sowie
@@ -13,9 +22,8 @@ mit XYZ-Koordinaten für n Punkte als Eingangsgröße einen (n x k)- Vektor der 
 Nachbarschaften enthaltenen Punkte angibt.
 """
 
-# Load the data             
-                   
-filepath = './data/'
+# Load the data          
+filepath = './data/mat/'
 filename = 'point_cloud_data.mat'
 
 with h5py.File(filepath+filename,'r') as file:
@@ -25,6 +33,14 @@ with h5py.File(filepath+filename,'r') as file:
     
     points3d_train = train_data[:3,:].T # 36932x3 matrix (x,y,z)
     points3d_valid = valid_data[:3,:].T # 91515x3 matrix (x,y,z)
+
+    class_train = train_data[3,:].T     # 36932x1 matrix (class)
+    class_valid = valid_data[3,:].T     # 91515x1 matrix (class)
+    
+
+
+valid_data = np.vstack((points3d_valid.T, class_valid)).T
+train_data = np.vstack((points3d_train.T, class_train)).T
 
 
 def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
@@ -38,7 +54,6 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
     Returns:
         indices_neighbors : (n x k)-Matrix with the indices of the neighbors
         points_neighbors  : (n x k x 3)-Matrix with the coordinates of the neighbors
-    
     """
     
     # Initialize the NearestNeighbors model
@@ -57,11 +72,21 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
     return indices, points_neighbors
 
 # Test the function
-points_train = points3d_train
 k = 50
-indices_neighbors_train, points_neighbors_train = getNeighborhood(points_train, k, firstNeighbor=True)
+indices_neighbors_train, points_neighbors_train = getNeighborhood(points3d_train, k, firstNeighbor=True)
+indices_neighbors_valid, points_neighbors_valid = getNeighborhood(points3d_valid, k, firstNeighbor=True)
+
+# Logging
+print("==="*30)
+print(f"Completed Nearest Neighbors ({round(time.time()-start_time,2)} seconds)\n")
+print(f'points_train.shape: {points3d_train.shape}')
+print(f'indices_neighbors_train.shape: {indices_neighbors_train.shape}')
+print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
+
+# Time
+start_time = time.time()
     
-#? --- AUFGABE 2 -------------------------------------------------------------
+#%% --- AUFGABE 2 -------------------------------------------------------------
 """
 Erstellen Sie eine Funktion, mit der für eine (n x 3)-Matrix mit XYZ-Koordinaten
 die entsprechenden Covariance Features berechnet werden.
@@ -101,6 +126,7 @@ def getCovFeatures(points_neighbors: np.ndarray):
         #! Compute the eigenvalues
         eigenvalues, _ = np.linalg.eigh(cov_matrix)   # eigenvectors are not needed
         eigenvalues    = np.flip(eigenvalues)         # order largest first
+        # alternativ: eigenvalues[::-1, ::-1] # ist eig. genau was np.flip macht
         
         #! Compute the covariance features
         lbd1, lbd2, lbd3 = eigenvalues
@@ -121,6 +147,74 @@ def getCovFeatures(points_neighbors: np.ndarray):
     
 # Test the function
 cov_features_train = getCovFeatures(points_neighbors_train)
+cov_features_valid = getCovFeatures(points_neighbors_valid)
 
-print(cov_features_train)
+# Logging
+print("==="*30)
+print(f"Completed Covariance Features ({round(time.time()-start_time,2)} seconds)\n")
+print(f'cov_features_train.shape: {cov_features_train.shape}')
+
+# Time
+start_time = time.time()
+
+#%% --- AUFGABE 3 -------------------------------------------------------------
+"""
+Führen Sie eine Klassifikation mittels des Random Forest Klassifikators durch. Dieser
+Klassifikator soll auf den gekennzeichneten Trainingsdaten trainiert werden, so dass die
+Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
+"""
+
+
+# mit bootstrap=True und max_samples wird festgelegt, wie viele zufällige Einträge genutzt werden sollen, 
+# um die einzelnen Bäume zu trainieren. n_estimators legt fest, wie viele Bäume trainiert werden sollen.
+# Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
+# Werte 20 und 0.4 sind absichtlich niedrig gewählt damit der code schneller läuft. Für "echte" Ergebnisse hochsetzen
+rfc = RandomForestClassifier(n_estimators=200,bootstrap=False,n_jobs=4)
+rfc = rfc.fit(X=cov_features_train,y=class_train)
+
+# Apply the Random Forest Classifier to the validation data
+class_pred = rfc.predict(cov_features_valid)
+
+# Logging
+print("==="*30)
+print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
+
+# Time
+start_time = time.time()
+
+
+
+#%% --- AUFGABE 4 -------------------------------------------------------------
+"""
+Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
+Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
+und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
+"""
+
+# Compute the confusion matrix
+cm = confusion_matrix(class_valid, class_pred)
+
+print("Confusion Matrix:")
+print(cm)
+
+# save the confusion matrix as a txt file
+np.savetxt('confusion_matrix.txt', cm, fmt='%d')
+
+# # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
+# scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
+
+# # Logging
+# print("==="*30)
+# print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
+# print(f'scores: {scores}')
+
+
+# # Step 3 (Optional): Display the confusion matrix
+# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
+# disp.plot(cmap='Blues')  # Adjust the colormap if needed
+
+# # Show the plot
+# import matplotlib.pyplot as plt
+# plt.show()
+
 

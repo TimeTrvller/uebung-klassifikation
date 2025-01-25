@@ -22,9 +22,8 @@ mit XYZ-Koordinaten für n Punkte als Eingangsgröße einen (n x k)- Vektor der 
 Nachbarschaften enthaltenen Punkte angibt.
 """
 
-# Load the data             
-                   
-filepath = './data/'
+# Load the data          
+filepath = './data/mat/'
 filename = 'point_cloud_data.mat'
 
 with h5py.File(filepath+filename,'r') as file:
@@ -42,12 +41,6 @@ with h5py.File(filepath+filename,'r') as file:
 
 valid_data = np.vstack((points3d_valid.T, class_valid)).T
 train_data = np.vstack((points3d_train.T, class_train)).T
-
-
-    
-# print number of points in each class    
-print(f'Number of each class in class_train: {np.unique(class_train, return_counts=True)}')
-print(f'Number of each class in class_valid: {np.unique(class_valid, return_counts=True)}')
 
 
 def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
@@ -90,7 +83,8 @@ print(f'points_train.shape: {points3d_train.shape}')
 print(f'indices_neighbors_train.shape: {indices_neighbors_train.shape}')
 print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
 
-start = time.time()
+# time
+start_time = time.time()
     
 #%% --- AUFGABE 2 -------------------------------------------------------------
 """
@@ -160,6 +154,7 @@ print("==="*30)
 print(f"Completed Covariance Features ({round(time.time()-start_time,2)} seconds)\n")
 print(f'cov_features_train.shape: {cov_features_train.shape}')
 
+# time
 start_time = time.time()
 
 #%% --- AUFGABE 3 -------------------------------------------------------------
@@ -183,8 +178,8 @@ class_pred = rfc.predict(cov_features_valid)
 # logging
 print("==="*30)
 print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
-print(f'rfc: {rfc}')
 
+# time
 start_time = time.time()
 
 
@@ -234,10 +229,17 @@ Diese Datei können Sie in Meshlab zur 3D-Visualisierung importieren.
 # Create colored point clouds
 # Prediction
 colored_point_cloud = create_colored_point_cloud(valid_data, class_pred)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_data_pred')
+save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_pred')
 # Ground truth
 colored_point_cloud = create_colored_point_cloud(valid_data, class_valid)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_data_gt')
+save_colored_point_cloud_as_ply(colored_point_cloud, 'valid')
 # Train data
 colored_point_cloud = create_colored_point_cloud(train_data, class_train)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'train_data')
+save_colored_point_cloud_as_ply(colored_point_cloud, 'train')
+
+
+# logging
+print("==="*30)
+print(f"Completed Saving Point Clouds ({round(time.time()-start_time,2)} seconds)\n")
+print("==="*30)
+print("==="*30)
