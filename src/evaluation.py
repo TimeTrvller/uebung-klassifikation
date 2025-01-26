@@ -14,10 +14,10 @@ FN = np.zeros(n_classes) # False negative
 TN = np.zeros(n_classes) # True negative
 
 for i in range(n_classes):
-    tp[i] = cm[i, i]
-    fp[i] = np.sum(cm[:, i]) - tp
-    fn[i] = np.sum(cm[i, :]) - tp
-    tn[i] = total - tp - fp - fn
+    TP[i] = cm[i, i]
+    FP[i] = np.sum(cm[:, i]) - TP[i]
+    FN[i] = np.sum(cm[i, :]) - TP[i]
+    TN[i] = total - TP[i] - FP[i] - FN[i]
 
 # # Print the results
 # for i in range(n_classes):
@@ -39,3 +39,5 @@ for i in range(n_classes):
     
 # General evaluation metrics
 overall_accuracy = np.sum(TP) / total
+
+print(overall_accuracy)
