@@ -1,7 +1,7 @@
 import numpy as np
 
 # Load the confusion matrix
-cm = np.loadtxt("confusion_matrix.txt", dtype=int)
+cm = np.loadtxt("data/txt/confusion_matrix.txt", dtype=int)
 n_classes = cm.shape[0]
 
 # Total sum of the matrix
@@ -38,6 +38,12 @@ for i in range(n_classes):
     quality[i] = TP[i] / (TP[i] + FP[i] + FN[i])
     
 # General evaluation metrics
-overall_accuracy = np.sum(TP) / total
+overall_accuracy = np.sum(TP) / total  # overall accuracy
+mean_recall = np.mean(recall)          # mean completeness
 
-print(overall_accuracy)
+print(f"Quality:          {quality}")
+print(f"Precision:        {precision}")
+print(f"Recall:           {recall}")
+print(f"F1 score:         {f1_score}")
+print(f"Overall accuracy: {overall_accuracy}")
+print(f"Mean recall:      {mean_recall}")

@@ -163,13 +163,14 @@ Führen Sie eine Klassifikation mittels des Random Forest Klassifikators durch. 
 Klassifikator soll auf den gekennzeichneten Trainingsdaten trainiert werden, so dass die
 Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 """
-
-
-# mit bootstrap=True und max_samples wird festgelegt, wie viele zufällige Einträge genutzt werden sollen, 
-# um die einzelnen Bäume zu trainieren. n_estimators legt fest, wie viele Bäume trainiert werden sollen.
-# Die gibt den Random Forest als leeres Konstrukt zurück, welcher dann auf ein Datensatz angewendet wird.
-# Werte 20 und 0.4 sind absichtlich niedrig gewählt damit der code schneller läuft. Für "echte" Ergebnisse hochsetzen
+#  Initialize the Random Forest Classifier
+## n_estimators: number of trees in the forest
+## bootstrap: whether bootstrap samples are used when building trees
+#             (False: no bootstrap -> use the whole training set, validation set is used for testing)
+## n_jobs: number of jobs to run in parallel (default: 1)
 rfc = RandomForestClassifier(n_estimators=200,bootstrap=False,n_jobs=4)
+
+# Train the Random Forest Classifier
 rfc = rfc.fit(X=cov_features_train,y=class_train)
 
 # Apply the Random Forest Classifier to the validation data
@@ -204,8 +205,8 @@ cmp = np.round(cm/rowsum[:,np.newaxis]*100)
 print("Confusion Matrix in %:")
 print(cmp)
 # save the confusion matrix as a txt file
-np.savetxt('confusion_matrix.txt', cm, fmt='%d')
-np.savetxt('confusion_matrix_percent.txt', cmp, fmt='%d')
+np.savetxt('data/txt/confusion_matrix.txt', cm, fmt='%d')
+np.savetxt('data/txt/confusion_matrix_percent.txt', cmp, fmt='%d')
 
 ##! The evaluation metrics are calculated in the evaluation.py file
 
