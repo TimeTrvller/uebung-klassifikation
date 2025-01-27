@@ -111,7 +111,7 @@ def getCovFeatures(points_neighbors: np.ndarray):
     n = points_neighbors.shape[0]
     
     # Initialize the matrix to store the covariance features
-    cov_features = np.zeros((n, 8))
+    cov_features = np.zeros((n, 9))
     
     # Compute the covariance features for each point
     for i in range(n):
@@ -124,8 +124,8 @@ def getCovFeatures(points_neighbors: np.ndarray):
         cov_matrix    = 1/(num_neighbors - 1) * (neighbors - sample_mean).T @ (neighbors - sample_mean) # formula from the script
         
         #! Compute the eigenvalues
-        eigenvalues, _ = np.linalg.eigh(cov_matrix)   # eigenvectors are not needed
-        eigenvalues    = np.flip(eigenvalues)         # order largest first
+        eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+        eigenvalues    = np.flip(eigenvalues)                    # order largest first
         # alternativ: eigenvalues[::-1, ::-1] # ist eig. genau was np.flip macht
         
         #! Compute the covariance features
@@ -141,7 +141,20 @@ def getCovFeatures(points_neighbors: np.ndarray):
         change_curv  = lbd3 / sum_eigen
         
         # Store the covariance features
-        cov_features[i] = [linearity, planarity, scattering, omnivariance, anisotropy, eigenentropy, sum_eigen, change_curv]
+        cov_features[i,:7] = [linearity, planarity, scattering, omnivariance, anisotropy, eigenentropy, sum_eigen]
+        
+        ###############################################################################################
+        '''
+        Als zusätzliches Feature könnte man die Höhendifferenz der Nachbarn berechnen,
+        um vor allem Fassade von Boden zu unterscheiden.
+        '''
+        #! Compute geometric features
+        # height difference of the neighbors
+        height_diff = np.max(neighbors[:,2]) - np.min(neighbors[:,2])
+    
+        # store the geometric features
+        cov_features[i,8] = height_diff
+        ###############################################################################################
     
     return cov_features
     
@@ -184,8 +197,6 @@ print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} se
 start_time = time.time()
 
 
-
-#%% --- AUFGABE 4 -------------------------------------------------------------
 #%% --- AUFGABE 4 -------------------------------------------------------------
 """
 Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
