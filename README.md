@@ -84,7 +84,7 @@ The $Precision$ of class $i$ is the proportion between correctly classified actu
 ### F1-Score
 The $F1-Score$ is the harmonic mean between Precision and Recall. 
 ```math
-Recall_i = 2 \cdot \frac{Precision_i \cdot Recall_i}{Precision_i + Recall_i}
+F1-Score = 2 \cdot \frac{Precision_i \cdot Recall_i}{Precision_i + Recall_i}
 ```
 
 ### Quality
