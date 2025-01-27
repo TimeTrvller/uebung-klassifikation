@@ -185,28 +185,35 @@ start_time = time.time()
 
 
 #%% --- AUFGABE 4 -------------------------------------------------------------
+#%% --- AUFGABE 4 -------------------------------------------------------------
 """
 Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
 Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
 und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
 """
 
+# Compute the confusion matrix
+cm = confusion_matrix(class_valid, class_pred)
+
+print("Confusion Matrix:")
+print(cm)
+
+rowsum = cm.sum(axis=1)
+cmp = np.round(cm/rowsum[:,np.newaxis]*100)
+
+print("Confusion Matrix in %:")
+print(cmp)
+# save the confusion matrix as a txt file
+np.savetxt('confusion_matrix.txt', cm, fmt='%d')
+np.savetxt('confusion_matrix_percent.txt', cmp, fmt='%d')
+
 # # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
 # scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
 
-# # logging
+# # Logging
 # print("==="*30)
 # print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
 # print(f'scores: {scores}')
-
-# # # ave class_pred and class_valid side by side
-# # class_pred = class_pred.reshape(-1,1)
-# # class_valid = class_valid.reshape(-1,1)
-# # class_pred_valid = np.hstack((class_pred,class_valid))
-
-# # np.savetxt('class_pred_valid.csv', class_pred_valid, delimiter=',', fmt='%d')
-# # Step 2: Compute the confusion matrix
-# cm = confusion_matrix(class_valid, class_pred)
 
 # # Step 3 (Optional): Display the confusion matrix
 # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
@@ -215,8 +222,6 @@ und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Forme
 # # Show the plot
 # import matplotlib.pyplot as plt
 # plt.show()
-
-
 
 
 #%% --- AUFGABE 5 --------------------------------------------------------------
