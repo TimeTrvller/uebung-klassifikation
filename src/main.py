@@ -207,21 +207,7 @@ print(cmp)
 np.savetxt('confusion_matrix.txt', cm, fmt='%d')
 np.savetxt('confusion_matrix_percent.txt', cmp, fmt='%d')
 
-# # scores = cross_val_score(rfc,cov_features_train,class_train,cv=5)
-# scores = cross_validate(rfc,cov_features_valid,class_valid) # erlaubt mittels scoring= für eigene Metriken
-
-# # Logging
-# print("==="*30)
-# print(f"Completed Cross Validation ({round(time.time()-start_time,2)} seconds)\n")
-# print(f'scores: {scores}')
-
-# # Step 3 (Optional): Display the confusion matrix
-# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=rfc.classes_)
-# disp.plot(cmap='Blues')  # Adjust the colormap if needed
-
-# # Show the plot
-# import matplotlib.pyplot as plt
-# plt.show()
+##! The evaluation metrics are calculated in the evaluation.py file
 
 
 #%% --- AUFGABE 5 --------------------------------------------------------------
