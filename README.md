@@ -66,7 +66,46 @@ After the features are computed for each point of the point cloud, the classific
 The classificator is trained with the dataset `PC_training` contained in `\data\point_cloud_data.mat` and validated on the dataset `PC_validation`.
 
 ## Evaluation
-The quality of the classification is determined by computing the confusion matrix and other quality measures.
+The quality of the classification is determined by computing the confusion matrix and other quality measures, which rely on the Number of true positives (TP), false positives (FP), true negatives (TN) and false negatives (FN).
+The first four metrics are computed for each class $i$. The last two metrics give information about the overall classification in one number. In the following, there are index $i$ runs from $1$ to the number of Classes $N$.
+
+### Recall
+```math
+{Recall}_i = \frac{TP_i}{TP_i + FN_i}
+```
+
+### Precision
+```math
+{Precision}_i = \frac{TP_i}{TP_i + FP_i}
+```
+
+### F1-Score
+```math
+Recall_i = 2 \cdot \frac{Precision_i \cdot Recall_i}{Precision_i + Recall_i}
+```
+
+### Quality
+```math
+Quality_i = \frac{TP_i}{TP_i + FP_i + FN_i}
+```
+
+### Overall Accuracy
+```math
+OA = \frac{\sum_i TP_i}{\sum_i TP_i + FP_i }
+```
+
+### Mean Recall
+```math
+Mean Recall = \frac{\sum_i Recall_i}{N}
+```
 
 ## Visualisation
 After classification, the colored point cloud is exported as `.ply` with `helper_functions.py` and visualized in `Meshlab`.
+
+## Extension of the Classification
+After Visualization of the classified point cloud in `Meshlab` some problems are noticable, e.g. the ground and facade are classified as each other. This is because of the rotational invariance of the covariance features. Both ground and facade have supposedly high planarity and similar other covariance features. To differentiate them from each other, we can introduce a simple geometric feature. We chose the `height difference` of the neighborhood:
+
+```math
+height diff = max(z_{neighbors}) - min(z_{neighbors})
+```
+By adding this feature to the feature vector the random random forest classification improves noticeably. Specifically the problem with ground and facade classification is drastically improved.
