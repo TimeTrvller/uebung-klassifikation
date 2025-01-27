@@ -1,7 +1,7 @@
 # Semantic classification of 3d point clouds
 
 The goal of this exercise is the implementation of a procedure for semantic classification of a 3d point cloud with a random forest classificator.
-We chose a neighborhood of k=50 nearest neighbors.<br>
+We chose a neighborhood of $k=50$ nearest neighbors.<br>
 The exercise consists of the following steps.
 
 ## Neighborhood
@@ -10,8 +10,8 @@ Each matrix consists of XYZ coordinates and the point class. The first step is t
 This function is implemented as `getNeighborhood()`.
 
 ## Covariance features
-For each point, a total of eight features based on the eigenvalues of the *scatter matrix* are computed. This is done in the functions `getScatterMatrix()` and `computeCovarianceFeatures()`.
-The *scatter matrix* or *structure tensor* is given by the 3D covariance matrix
+For each point, a total of eight features based on the eigenvalues of the *scatter matrix* are computed. This is done in the function `getCovFeatures()`.
+The *structure tensor* is given by the 3D covariance matrix:
 ```math
 S3D = \frac{1}{k-1} \cdot \sum_{i=0}^{k} (X_i - \bar{X})(X_i - \bar{X})^T
 ```
@@ -70,31 +70,37 @@ The quality of the classification is determined by computing the confusion matri
 The first four metrics are computed for each class $i$. The last two metrics give information about the overall classification in one number. In the following, there are index $i$ runs from $1$ to the number of Classes $N$.
 
 ### Recall
+The $Recall$ of class $i$ is the proportion between correctly classified actual positive instances of the class and all actual positives for this class. This metric is therefore also called *Completeness*, because it is a measure of how well/complete the positive instances are actually correctly classified. The Recall is also equal to the Probability, that a Point classified as class A is actually in class A.
 ```math
 {Recall}_i = \frac{TP_i}{TP_i + FN_i}
 ```
 
 ### Precision
+The $Precision$ of class $i$ is the proportion between correctly classified actual positive instance of the class and all positive instances (correctly and incorrectly classified). The metric is also called *Correctness*, because it is a measure of how well/correct the classificator predicts a certain class.
 ```math
 {Precision}_i = \frac{TP_i}{TP_i + FP_i}
 ```
 
 ### F1-Score
+The $F1-Score$ is the harmonic mean between Precision and Recall. 
 ```math
 Recall_i = 2 \cdot \frac{Precision_i \cdot Recall_i}{Precision_i + Recall_i}
 ```
 
 ### Quality
+The $Quality$ is another metric that includes both FP and FN. It is also known as the *Jaccard-Index*.
 ```math
 Quality_i = \frac{TP_i}{TP_i + FP_i + FN_i}
 ```
 
 ### Overall Accuracy
+The $Overall Accuracy$ is the number of overall true positives compared to all instances.
 ```math
 OA = \frac{\sum_i TP_i}{\sum_i TP_i + FP_i }
 ```
 
 ### Mean Recall
+The $Mean Recall$ is another possible metric, where only one metric is used for the whole classification.
 ```math
 Mean Recall = \frac{\sum_i Recall_i}{N}
 ```
