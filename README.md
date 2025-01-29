@@ -3,6 +3,7 @@
 ## Google Drive Präsentation
 [Semantische Klassifikation von 3D-Punktwolken](https://docs.google.com/presentation/d/1Az53VhTfEZDUxxQgWjQuA3IHnuoYhAEemqrziNHTCFU/edit?usp=sharing)
 
+## Intuition
 The goal of this exercise is the implementation of a procedure for semantic classification of a 3d point cloud with a random forest classificator.
 We chose a neighborhood of $k=50$ nearest neighbors.<br>
 The exercise consists of the following steps.
