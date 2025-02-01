@@ -352,14 +352,14 @@ print("Classification report:")
 classificationReport = classification_report(class_valid, class_pred, target_names = display_labels)
 print(classificationReport)
 with open('./data/txt/quality_metrics.txt', 'a') as f:
-    f.write("\n\nClassification report:")
+    f.write("\n\nClassification report:\n")
     f.write(classificationReport)
 
 print("Classification report (include height difference):")
 classificationReportGeom = classification_report(class_valid, class_pred_geom,  target_names = display_labels)
 print(classificationReportGeom)
 with open('./data/txt/quality_metrics_geom.txt', 'a') as f:
-    f.write("\n\nClassification report (no height difference):")
+    f.write("\n\nClassification report (with height difference):\n")
     f.write(classificationReportGeom)
 
 # logging
