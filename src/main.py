@@ -22,7 +22,7 @@ mit XYZ-Koordinaten für n Punkte als Eingangsgröße einen (n x k)- Vektor der 
 Nachbarschaften enthaltenen Punkte angibt.
 """
 
-# Load the data          
+# Load the data
 filepath = './data/mat/'
 filename = 'point_cloud_data.mat'
 
@@ -30,32 +30,32 @@ with h5py.File(filepath+filename,'r') as file:
     # Extract the training and validation data
     train_data = file['PC_training']    # 4x36932 matrix (x,y,z,class)
     valid_data = file['PC_validation']  # 4x91515 matrix (x,y,z,class)
-    
+
     points3d_train = train_data[:3,:].T # 36932x3 matrix (x,y,z)
     points3d_valid = valid_data[:3,:].T # 91515x3 matrix (x,y,z)
 
     class_train = train_data[3,:].T     # 36932x1 matrix (class)
     class_valid = valid_data[3,:].T     # 91515x1 matrix (class)
-    
+
 
 
 valid_data = np.vstack((points3d_valid.T, class_valid)).T
 train_data = np.vstack((points3d_train.T, class_train)).T
 
 
-def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
+def getNeighborhood(points: np.ndarray, k: int, excludeFirstNeighbor: bool = False):
     """
     Compute the k nearest neighbors for each point of points.
-    
+
     Parameters:
-        points            : (n x 3)-Matrix with n 3D points (x,y,z)
-        k                 : number of neighbors
-        firstNeighbor     : if True, exclude the point itself from the neighbors
+        points               : (n x 3)-Matrix with n 3D points (x,y,z)
+        k                    : number of neighbors
+        excludeFirstNeighbor : if True, exclude the point itself from the neighbors
     Returns:
-        indices_neighbors : (n x k)-Matrix with the indices of the neighbors
-        points_neighbors  : (n x k x 3)-Matrix with the coordinates of the neighbors
+        indices_neighbors    : (n x k)-Matrix with the indices of the neighbors
+        points_neighbors     : (n x k x 3)-Matrix with the coordinates of the neighbors
     """
-    
+
     # Initialize the NearestNeighbors model
     nbrs = NearestNeighbors(n_neighbors=k + 1, algorithm='auto').fit(points)
 
@@ -63,9 +63,9 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
     distances, indices = nbrs.kneighbors(points)
 
     # Exclude the first neighbor (itself) if needed
-    if firstNeighbor:
+    if excludeFirstNeighbor:
         indices = indices[:, 1:]
-        
+
     # Get the coordinates of the neighbors
     points_neighbors = points[indices]
 
@@ -73,8 +73,8 @@ def getNeighborhood(points: np.ndarray, k: int, firstNeighbor: bool = False):
 
 # Test the function
 k = 50
-indices_neighbors_train, points_neighbors_train = getNeighborhood(points3d_train, k, firstNeighbor=True)
-indices_neighbors_valid, points_neighbors_valid = getNeighborhood(points3d_valid, k, firstNeighbor=True)
+indices_neighbors_train, points_neighbors_train = getNeighborhood(points3d_train, k, excludeFirstNeighbor=True)
+indices_neighbors_valid, points_neighbors_valid = getNeighborhood(points3d_valid, k, excludeFirstNeighbor=True)
 
 # logging
 print("==="*30)
@@ -85,7 +85,7 @@ print(f'points_neighbors_train.shape: {points_neighbors_train.shape}')
 
 # time
 start_time = time.time()
-    
+
 #%% --- AUFGABE 2 -------------------------------------------------------------
 """
 Erstellen Sie eine Funktion, mit der für eine (n x 3)-Matrix mit XYZ-Koordinaten
@@ -97,40 +97,40 @@ def getCovFeatures(points_neighbors: np.ndarray):
     """
     Compute the covariance features for each point of points_neighbors.
     Covariance features are the 8 entries of the scattermatrix.
-    
+
     linearity, planarity, scattering, omnivariance, anisotropy,
     eigenentropy, sum of eigenvalues, change of curvature
-    
+
     Parameters:
         points_neighbors : (n x k x 3)-Matrix with n 3D points and their k neighbors (x,y,z)
     Returns:
         cov_features     : (n x 8)-Matrix with the covariance features
     """
-    
+
     # Get the number of points
     n = points_neighbors.shape[0]
-    
+
     # Initialize the matrix to store the covariance features
     cov_features = np.zeros((n, 9))
-    
+
     # Compute the covariance features for each point
     for i in range(n):
         # Get the neighbors coordinates (x,y,z) of the point i
         neighbors = points_neighbors[i]
-        
+
         #! Compute the covariance matrix
         num_neighbors = neighbors.shape[0]           # number of neighbors
         sample_mean   = np.mean(neighbors, axis=0)   # mean of the neighbors
         cov_matrix    = 1/(num_neighbors - 1) * (neighbors - sample_mean).T @ (neighbors - sample_mean) # formula from the script
-        
+
         #! Compute the eigenvalues
         eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
         eigenvalues    = np.flip(eigenvalues)                    # order largest first
         # alternativ: eigenvalues[::-1, ::-1] # ist eig. genau was np.flip macht
-        
+
         #! Compute the covariance features
         lbd1, lbd2, lbd3 = eigenvalues
-        
+
         linearity    = (lbd1 - lbd2) / lbd1
         planarity    = (lbd2 - lbd3) / lbd1
         scattering   = lbd3 / lbd1
@@ -139,10 +139,10 @@ def getCovFeatures(points_neighbors: np.ndarray):
         eigenentropy = - sum(lbd * np.log(lbd) for lbd in (lbd1, lbd2, lbd3))
         sum_eigen    = sum(eigenvalues)
         change_curv  = lbd3 / sum_eigen
-        
-        # Store the covariance features
-        cov_features[i,:7] = [linearity, planarity, scattering, omnivariance, anisotropy, eigenentropy, sum_eigen]
-        
+
+        # Store the covariance features (at 0th to 7th column of cov_features)
+        cov_features[i,:8] = [linearity, planarity, scattering, omnivariance, anisotropy, eigenentropy, sum_eigen, change_curv]
+
         ###############################################################################################
         '''
         Als zusätzliches Feature könnte man die Höhendifferenz der Nachbarn berechnen,
@@ -151,13 +151,13 @@ def getCovFeatures(points_neighbors: np.ndarray):
         #! Compute geometric features
         # height difference of the neighbors
         height_diff = np.max(neighbors[:,2]) - np.min(neighbors[:,2])
-    
-        # store the geometric features
+
+        # store the geometric features (at 9th column of cov_features)
         cov_features[i,8] = height_diff
         ###############################################################################################
-    
+
     return cov_features
-    
+
 # Test the function
 cov_features_train = getCovFeatures(points_neighbors_train)
 cov_features_valid = getCovFeatures(points_neighbors_valid)
@@ -220,6 +220,7 @@ np.savetxt('data/txt/confusion_matrix.txt', cm, fmt='%d')
 np.savetxt('data/txt/confusion_matrix_percent.txt', cmp, fmt='%d')
 
 ##! The evaluation metrics are calculated in the evaluation.py file
+
 
 
 #%% --- AUFGABE 5 --------------------------------------------------------------
