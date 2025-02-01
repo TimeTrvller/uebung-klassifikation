@@ -1,0 +1,19 @@
+Quality:          [0.09 0.46 0.35 0.88 0.74]
+Precision:        [0.11 0.77 0.61 0.94 0.79]
+Recall:           [0.31 0.54 0.46 0.94 0.93]
+F1 score:         [0.16 0.63 0.52 0.94 0.85]
+Overall accuracy: 0.86
+Mean recall:      0.64
+
+
+Classification report:              precision    recall  f1-score   support
+
+        wire       0.11      0.31      0.16       899
+  pole/trunk       0.77      0.54      0.63      1441
+      facade       0.61      0.46      0.52     13271
+      ground       0.94      0.94      0.94     67419
+  vegetation       0.79      0.93      0.85      8485
+
+    accuracy                           0.86     91515
+   macro avg       0.64      0.64      0.62     91515
+weighted avg       0.86      0.86      0.86     91515
