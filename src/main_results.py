@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, cross_validate
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 from helper_functions import create_colored_point_cloud, save_colored_point_cloud_as_ply
 import h5py
 import time
@@ -109,7 +109,7 @@ def getCovFeatures(points_neighbors: np.ndarray, flag_dZ: bool=False):
 
     return cov_features
 
-def evaluateConfusionMatrix(cm, filename_strg='0'):
+def evaluateConfusionMatrix(cm, filename_strg=''):
     # Load the confusion matrix
     #cm = np.loadtxt("data/txt/confusion_matrix.txt", dtype=int)
     n_classes = cm.shape[0]
@@ -151,28 +151,32 @@ def evaluateConfusionMatrix(cm, filename_strg='0'):
     overall_accuracy = np.sum(TP) / total  # overall accuracy
     mean_recall = np.mean(recall)          # mean completeness
 
+    # Round all metrics to 2 decimal places
+    quality = np.round(quality, 2)
+    precision = np.round(precision, 2)
+    recall = np.round(recall, 2)
+    f1_score = np.round(f1_score, 2)
+    overall_accuracy = np.round(overall_accuracy, 2)
+    mean_recall = np.round(mean_recall, 2)
+
     # Print output
-    with np.printoptions(precision=3, suppress=True):    # show only 3 first entries after decimal point
-        print(f"Quality:          {quality}")
-        print(f"Precision:        {precision}")
-        print(f"Recall:           {recall}")
-        print(f"F1 score:         {f1_score}")
-        print(f"Overall accuracy: {overall_accuracy:.3f}")
-        print(f"Mean recall:      {mean_recall:.3f}")
+    print(f"Quality:          {quality}")
+    print(f"Precision:        {precision}")
+    print(f"Recall:           {recall}")
+    print(f"F1 score:         {f1_score}")
+    print(f"Overall accuracy: {overall_accuracy}")
+    print(f"Mean recall:      {mean_recall}")
 
     # Save to file
-    output_file = 'data/txt/quality_metrics_' + filename_strg
+    output_file = 'data/txt/quality_metrics' + filename_strg + '.txt'
 
     with open(output_file, 'w') as file:
-        with np.printoptions(precision=3, suppress=True):
-            print(f"Quality:          {quality}", file=file)
-            print(f"Precision:        {precision}", file=file)
-            print(f"Recall:           {recall}", file=file)
-            print(f"F1 score:         {f1_score}", file=file)
-            print(f"Overall accuracy: {overall_accuracy:.3f}", file=file)
-            print(f"Mean recall:      {mean_recall:.3f}", file=file)
-
-    np.set_printoptions()           # reset np.printoptions
+        print(f"Quality:          {quality}", file=file)
+        print(f"Precision:        {precision}", file=file)
+        print(f"Recall:           {recall}", file=file)
+        print(f"F1 score:         {f1_score}", file=file)
+        print(f"Overall accuracy: {overall_accuracy}", file=file)
+        print(f"Mean recall:      {mean_recall}", file=file)
 
 
 # =======================================================================
@@ -258,10 +262,10 @@ class_pred_geom = rfc_geom.predict(cov_features_valid_geom)
 print("==="*30)
 print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
 
+# =================== Evaluation with confusion matrix  ============================
 # time
 start_time = time.time()
 
-# =================== Evaluation with confusion matrix  ============================
 # Compute the confusion matrix
 cm = confusion_matrix(class_valid, class_pred)
 cm_geom = confusion_matrix(class_valid, class_pred_geom)
@@ -276,25 +280,96 @@ cmp = np.round(cm/rowsum[:,np.newaxis]*100)
 print("\nConfusion Matrix in %:")
 print(cmp)
 # save the confusion matrix as a txt file
-np.savetxt('data/txt/confusion_matrix.txt', cm, fmt='%d')
-np.savetxt('data/txt/confusion_matrix_percent.txt', cmp, fmt='%d')
+np.savetxt('./data/txt/confusion_matrix.txt', cm, fmt='%d')
+np.savetxt('./data/txt/confusion_matrix_percent.txt', cmp, fmt='%d')
 
 rowsum_geom = cm_geom.sum(axis=1)
 cmp_geom = np.round(cm_geom/rowsum_geom[:,np.newaxis]*100)
 print("\nConfusion Matrix (height diff included) in %:")
 print(cmp_geom)
 # save the confusion matrix as a txt file
-np.savetxt('data/txt/confusion_matrix_geom.txt', cm_geom, fmt='%d')
-np.savetxt('data/txt/confusion_matrix_percent_geom.txt', cmp_geom, fmt='%d')
+np.savetxt('./data/txt/confusion_matrix_geom.txt', cm_geom, fmt='%d')
+np.savetxt('./data/txt/confusion_matrix_percent_geom.txt', cmp_geom, fmt='%d')
+
+# =================== Plot the confusion matrices  ============================
+display_labels=["wire", "pole/trunk", "facade", "ground", "vegetation"]
+
+# Without normalization -> shows NUMBER of points in each confusion matrix row/col
+dispCM = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred, display_labels = display_labels)
+plt.title("Konfusionsmatrix")
+plt.savefig('./data/img/confusion_matrix.png')
+dispCM_geom = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred_geom, display_labels = display_labels)
+plt.title("Konfusionsmatrix (mit Höhendifferenz)")
+plt.savefig('./data/img/confusion_matrix_geom.png')
+
+# With normalization to all -> shows PERCENTAGE of points in each confusion matrix row/col
+dispCM = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred, display_labels = display_labels, normalize = 'all')
+plt.title("Konfusionsmatrix normalisiert nach All")
+plt.savefig('./data/img/confusion_matrix_normAll.png')
+dispCM_geom = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred_geom, display_labels = display_labels, normalize = 'all')
+plt.title("Konfusionsmatrix (mit Höhendifferenz) normalisiert nach All")
+plt.savefig('./data/img/confusion_matrix_geom_normAll.png')
+
+# With normalization to true -> shows in percent to which class points of a certain class are predicted
+# Examples for no geom:
+#       - 95% of ground points are actually classified as ground
+#       - 46% of facade points are actually classified as as facade, but 32% of them are classified as ground
+dispCM = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred, display_labels = display_labels, normalize = 'true')
+plt.title("Konfusionsmatrix normalisiert nach True")
+plt.savefig('./data/img/confusion_matrix_normTrue.png')
+dispCM_geom = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred_geom, display_labels = display_labels, normalize = 'true')
+plt.title("Konfusionsmatrix (mit Höhendifferenz) normalisiert nach True")
+plt.savefig('./data/img/confusion_matrix_geom_normTrue.png')
+
+# With normalization to pred -> shows in percent what classes contributed to a certain predicted class
+# Examples for no geom:
+#       - 61% of the points classified as wire were actually facade points.
+#       - 31% of the points classified as facade were actually ground points.
+dispCM = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred, display_labels = display_labels, normalize = 'pred')
+plt.title("Konfusionsmatrix normalisiert nach Pred")
+plt.savefig('./data/img/confusion_matrix_normPred.png')
+dispCM_geom = ConfusionMatrixDisplay.from_predictions(class_valid, class_pred_geom, display_labels = display_labels, normalize = 'pred')
+plt.title("Konfusionsmatrix (mit Höhendifferenz) normalisiert nach Pred")
+plt.savefig('./data/img/confusion_matrix_geom_normPred.png')
+
+# logging
+print("==="*30)
+print(f"Completed Evaluation with Confusion Matrix ({round(time.time()-start_time,2)} seconds)\n")
 
 # =================== Evaluation with further metrics  ============================
+# time
+start_time = time.time()
+
 # Print and save other Evaluation Metrics
 print("\nFurther Quality metrics:")
 evaluateConfusionMatrix(cm,'')
 print("\nFurther Quality metrics (height diff included):")
-evaluateConfusionMatrix(cm_geom,'geom')
+evaluateConfusionMatrix(cm_geom,'_geom')
+
+# =================== Evaluation with classification_report ===========================
+print("\n")
+print("Classification report:")
+classificationReport = classification_report(class_valid, class_pred, target_names = display_labels)
+print(classificationReport)
+with open('./data/txt/quality_metrics.txt', 'a') as f:
+    f.write("\n\nClassification report:")
+    f.write(classificationReport)
+
+print("Classification report (include height difference):")
+classificationReportGeom = classification_report(class_valid, class_pred_geom,  target_names = display_labels)
+print(classificationReportGeom)
+with open('./data/txt/quality_metrics_geom.txt', 'a') as f:
+    f.write("\n\nClassification report (no height difference):")
+    f.write(classificationReportGeom)
+
+# logging
+print("==="*30)
+print(f"Completed Evaluation with Classification Report ({round(time.time()-start_time,2)} seconds)\n")
 
 # =================== Create and save colored point clouds  ============================
+# time
+start_time = time.time()
+
 # Prediction
 colored_point_cloud = create_colored_point_cloud(valid_data, class_pred)
 save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_pred')
@@ -308,10 +383,10 @@ save_colored_point_cloud_as_ply(colored_point_cloud, 'valid')
 colored_point_cloud = create_colored_point_cloud(train_data, class_train)
 save_colored_point_cloud_as_ply(colored_point_cloud, 'train')
 
-
 # logging
 print("==="*30)
 print(f"Completed Saving Point Clouds ({round(time.time()-start_time,2)} seconds)\n")
+print("To visualize point clouds drag and drop .ply Files in MeshLab")
 print("==="*30)
 print(f"Completed Total Workflow ({round(time.time()-start_overall_timer,2)} seconds)")
 print("==="*30)
