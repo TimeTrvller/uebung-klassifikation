@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, cross_validate
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 from helper_functions import create_colored_point_cloud, save_colored_point_cloud_as_ply
 import h5py
 import time
@@ -177,75 +177,47 @@ Klassifikator soll auf den gekennzeichneten Trainingsdaten trainiert werden, so 
 Klassifikation der gekennzeichneten Validierungsdaten erfolgen kann.
 """
 #  Initialize the Random Forest Classifier
-rfc = RandomForestClassifier(n_estimators=200,bootstrap=False,max_depth=None)
-
 ## n_estimators: number of trees in the forest
 ## bootstrap: whether bootstrap samples are used when building trees
 #             (False: no bootstrap -> use the whole training set, validation set is used for testing)
 ## n_jobs: number of jobs to run in parallel (default: 1)
-rfc = RandomForestClassifier(n_estimators=200,bootstrap=False,max_depth=None)
 
-# Train the Random Forest Classifier
-rfc = rfc.fit(X=cov_features_train,y=class_train)
+    
+classreports = []
+for n in range(10, 310, 10):
+    rfc = RandomForestClassifier(n_estimators=n,bootstrap=False,n_jobs=4,max_depth=4)
 
-# Apply the Random Forest Classifier to the validation data
-class_pred = rfc.predict(cov_features_valid)
+    # Train the Random Forest Classifier
+    rfc = rfc.fit(X=cov_features_train,y=class_train)
 
-# logging
-print("==="*30)
-print(f"Completed Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
+    # Apply the Random Forest Classifier to the validation data
+    class_pred = rfc.predict(cov_features_valid)
 
-# time
-start_time = time.time()
+    # logging
+    print("==="*30)
+    print(f"Completed {n//10} Random Forest Classifier ({round(time.time()-start_time,2)} seconds)\n")
 
-
-#%% --- AUFGABE 4 -------------------------------------------------------------
-"""
-Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
-Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
-und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
-"""
-
-# Compute the confusion matrix
-cm = confusion_matrix(class_valid, class_pred)
-
-print("Confusion Matrix:")
-print(cm)
-
-rowsum = cm.sum(axis=1)
-cmp = np.round(cm/rowsum[:,np.newaxis]*100)
-
-print("Confusion Matrix in %:")
-print(cmp)
-# save the confusion matrix as a txt file
-np.savetxt('data/txt/confusion_matrix.txt', cm, fmt='%d')
-np.savetxt('data/txt/confusion_matrix_percent.txt', cmp, fmt='%d')
-
-##! The evaluation metrics are calculated in the evaluation.py file
+    # time
+    start_time = time.time()
 
 
+    #%% --- AUFGABE 4 -------------------------------------------------------------
+    """
+    Evaluieren Sie die Güte der erreichten Ergebnisse, indem Sie geeignete Maße über die
+    Konfusionsmatrix bestimmen. Nutzen Sie auch in den Python-Modulen enthaltene Metriken
+    und vergleichen Sie diese mit Ihren Ergebnissen aus selbst implementierten Formeln.
+    """
+    classificationReport = classification_report(class_valid, class_pred, output_dict=True, target_names = ["wire", "pole/trunk", "facade", "ground", "vegetation"])
+    
+    
+    classreports.append(classificationReport)
+    
 
-#%% --- AUFGABE 5 --------------------------------------------------------------
-"""
-Exportieren Sie Ihre klassifizierte und nach Klassen eingefärbte Punktwolke
-mithilfe der bereitgestellten Funktionen in helper_functions.py als *.ply-Datei.
-Diese Datei können Sie in Meshlab zur 3D-Visualisierung importieren.
-"""
-
-# Create colored point clouds
-# Prediction
-colored_point_cloud = create_colored_point_cloud(valid_data, class_pred)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'valid_pred')
-# Ground truth
-colored_point_cloud = create_colored_point_cloud(valid_data, class_valid)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'valid')
-# Train data
-colored_point_cloud = create_colored_point_cloud(train_data, class_train)
-save_colored_point_cloud_as_ply(colored_point_cloud, 'train')
-
-
-# logging
-print("==="*30)
-print(f"Completed Saving Point Clouds ({round(time.time()-start_time,2)} seconds)\n")
-print("==="*30)
-print("==="*30)
+# write the classification reports to a json file
+import json
+with open('classification_reports_n_estimators.json', 'w') as f:
+    json.dump(classreports, f)
+    
+    
+    
+    
